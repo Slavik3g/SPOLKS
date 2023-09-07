@@ -36,6 +36,7 @@ try:
             elif data == "UPLOAD":
                 file_name = client_socket.recv(1024).decode()
                 file_size = int(client_socket.recv(1024).decode())
+
                 if last_client is None or last_client[0] != client_address[0]:
                     last_client = client_address
                     client_socket.send(str(0).encode())
@@ -84,10 +85,11 @@ try:
                 else:
                     client_socket.send("Файл не найден".encode())
 
-            elif data in ["CLOSE", "EXIT", "QUIT"]:
+            elif data == "CLOSE":
                 client_socket.send("Соединение закрыто.".encode())
                 client_socket.close()
                 break
+
             else:
                 response = "Неверная команда. Поддерживаемые команды: ECHO, TIME, CLOSE, UPLOAD, DOWNLOAD"
                 client_socket.send(response.encode())

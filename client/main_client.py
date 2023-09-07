@@ -14,17 +14,23 @@ while True:
 
     client_socket.send(command.encode())
 
-    if command in ["CLOSE", "EXIT", "QUIT"]:
+    if command == "CLOSE":
         response = client_socket.recv(1024).decode()
         print(response)
         break
+
     elif command == "ECHO":
         echo_message = input("Введите сообщение для отправки: ")
         client_socket.send(echo_message.encode())
         response = client_socket.recv(1024).decode()
         print(response)
+
+    elif command == "TIME":
+        response = client_socket.recv(1024).decode()
+        print(response)
+
     elif command == "UPLOAD":
-        file_name = input("Введите имя файла для загрузки: ")
+        file_name = input("Введите имя файла для загрузки на сервер: ")
         client_socket.send(file_name.encode())
 
         if os.path.exists(file_name):
@@ -40,7 +46,7 @@ while True:
             print("Файл не найден")
 
     elif command == "DOWNLOAD":
-        file_name = input("Введите имя файла для скачивания: ")
+        file_name = input("Введите имя файла для скачивания с сервера: ")
         client_socket.send(file_name.encode())
 
         file_size = int(client_socket.recv(1024).decode())
@@ -55,7 +61,8 @@ while True:
             print(f"Файл '{file_name}' скачан с сервера")
         else:
             print("Файл не найден на сервере")
-    elif command == "TIME":
+
+    else:
         response = client_socket.recv(1024).decode()
         print(response)
 
