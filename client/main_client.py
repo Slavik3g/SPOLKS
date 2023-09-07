@@ -1,6 +1,8 @@
 import os
 import socket
 
+from utils.progress_bar import progress
+
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 server_host = '127.0.0.1'
@@ -36,12 +38,14 @@ while True:
         if os.path.exists(file_name):
             file_size = os.path.getsize(file_name)
             client_socket.send(str(file_size).encode())
-            exist_size = int(client_socket.recv(1024).decode())
+            sent_size = int(client_socket.recv(1024).decode())
             with open(file_name, 'rb') as file:
-                file.seek(exist_size)
+                file.seek(sent_size)
                 for data in iter(lambda: file.read(1024), b''):
+                    progress(sent_size, file_size)
+                    sent_size += len(data)
                     client_socket.send(data)
-            print(f"Файл '{file_name}' загружен на сервер")
+            print(f"\nФайл '{file_name}' загружен на сервер")
         else:
             print("Файл не найден")
 
