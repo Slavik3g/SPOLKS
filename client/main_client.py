@@ -46,6 +46,8 @@ while True:
                     sent_size += len(data)
                     client_socket.send(data)
             print(f"\nФайл '{file_name}' загружен на сервер")
+            bitrate = client_socket.recv(1024).decode()
+            print(bitrate)
         else:
             print("Файл не найден")
 

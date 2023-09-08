@@ -53,6 +53,7 @@ try:
                         file = open(file_name, 'wb')
                 bytes_received = 0
                 try:
+                    start_time = time.time()
                     while bytes_received < file_size:
                         data = client_socket.recv(1024)
                         if not data:
@@ -60,7 +61,12 @@ try:
                         file.write(data)
                         bytes_received += len(data)
                     else:
-                        print(f"Файл '{file_name}' загружен на сервер")
+                        end_time = time.time()
+                        elapsed_time = end_time - start_time
+                        bitrate = (file_size * 8) / (elapsed_time * 1024 * 1024)
+                        print(f"Файл '{file_name}' загружен на сервер.")
+                        client_socket.send(f"Битрейт: {bitrate:.2f} Mbps".encode())
+
                 except socket.error as e:
                     print(f"Произошла ошибка: {str(e)}")
                 finally:
