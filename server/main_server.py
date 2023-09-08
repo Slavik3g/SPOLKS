@@ -11,6 +11,8 @@ server_socket.bind((host, port))
 
 server_socket.listen(1)
 last_client = None
+fatal_disconnect = False
+
 print(f"Сервер слушает на {host}:{port}")
 try:
     while True:
@@ -36,11 +38,8 @@ try:
                 file_name = client_socket.recv(1024).decode()
                 file_size = int(client_socket.recv(1024).decode())
 
-                if last_client is None or last_client[0] != client_address[0]:
-                    last_client = client_address
-                    client_socket.send(str(0).encode())
-                    file = open(file_name, 'wb')
-                else:
+                if last_client[0] == client_address[0] and fatal_disconnect is True:
+                    fatal_disconnect = False
                     if os.path.exists(file_name):
                         exist_file_size = os.path.getsize(file_name)
                         client_socket.send(str(exist_file_size).encode())
@@ -50,12 +49,18 @@ try:
                     else:
                         client_socket.send(str(file_size).encode())
                         file = open(file_name, 'wb')
+                else:
+                    fatal_disconnect = False
+                    last_client = client_address
+                    client_socket.send(str(0).encode())
+                    file = open(file_name, 'wb')
                 bytes_received = 0
                 try:
                     start_time = time.time()
                     while bytes_received < file_size:
                         data = client_socket.recv(1024)
                         if not data:
+                            fatal_disconnect = True
                             break
                         file.write(data)
                         bytes_received += len(data)
@@ -68,25 +73,35 @@ try:
 
                 except socket.error as e:
                     print(f"Произошла ошибка: {str(e)}")
+                    fatal_disconnect = True
                 finally:
                     file.close()
 
             elif data == "DOWNLOAD":
-                if last_client is None or last_client != client_address:
-                    last_client = client_address
-                else:
-                    pass
                 file_name = client_socket.recv(1024).decode()
-
                 if os.path.exists(file_name):
-                    file_size = os.path.getsize(file_name)
-                    client_socket.send(str(file_size).encode())
-
-                    with open(file_name, 'rb') as file:
+                    if last_client is not None and last_client[0] == client_address[0] and fatal_disconnect is True:
+                        fatal_disconnect = False
+                        client_socket.send("Докачка файла".encode())
+                        client_socket.send(str(os.path.getsize(file_name)).encode())
+                        file = open(file_name, 'rb')
+                        file_offset = int(client_socket.recv(1024).decode())
+                        file.seek(file_offset)
+                    else:
+                        fatal_disconnect = False
+                        last_client = client_address
+                        client_socket.send(str(os.path.getsize(file_name)).encode())
+                        file = open(file_name, 'rb')
+                    try:
                         for data in iter(lambda: file.read(1024), b''):
                             client_socket.send(data)
-
-                    print(f"Файл '{file_name}' отправлен клиенту")
+                        print(f"Файл '{file_name}' отправлен клиенту")
+                    except Exception:
+                        print("Клиент отключился")
+                        fatal_disconnect = True
+                        break
+                    finally:
+                        file.close()
                 else:
                     client_socket.send("Файл не найден".encode())
 

@@ -54,19 +54,31 @@ try:
         elif command == "DOWNLOAD":
             file_name = input("Введите имя файла для скачивания с сервера: ")
             client_socket.send(file_name.encode())
+            response = str(client_socket.recv(1024).decode())
+            if response == "Файл не найден":
+                print("Файл не найден на сервере")
+            else:
+                if response == "Докачка файла":
+                    print(f"Будет произведена докачка файла с сервера")
+                    file_size = int(client_socket.recv(1024).decode())
+                    curr_file_size = os.path.getsize(file_name)
+                    client_socket.send(str(curr_file_size).encode())
+                    file_size -= curr_file_size
+                    file = open(file_name, "ab")
+                else:
+                    file_size = int(response)
+                    file = open(file_name, "wb")
 
-            file_size = int(client_socket.recv(1024).decode())
-
-            if file_size > 0:
-                with open(file_name, 'wb') as file:
-                    bytes_received = 0
+                bytes_received = 0
+                try:
                     while bytes_received < file_size:
+                        progress(bytes_received, file_size)
                         data = client_socket.recv(1024)
                         file.write(data)
                         bytes_received += len(data)
-                print(f"Файл '{file_name}' скачан с сервера")
-            else:
-                print("Файл не найден на сервере")
+                    print(f"\nФайл '{file_name}' скачан с сервера")
+                finally:
+                    file.close()
 
         else:
             response = client_socket.recv(1024).decode()
