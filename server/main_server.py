@@ -9,7 +9,6 @@ port = 12344
 
 server_socket.bind((host, port))
 
-
 server_socket.listen(1)
 last_client = None
 print(f"Сервер слушает на {host}:{port}")
@@ -101,5 +100,7 @@ try:
                 client_socket.send(response.encode())
 
         print(f"Соединение с клиентом {client_address} закрыто")
-except Exception:
+except BaseException as e:
+    print(f"\nOps, error happen. Error: {e}")
+finally:
     server_socket.close()
