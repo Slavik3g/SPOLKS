@@ -53,28 +53,38 @@ def tcp_client_communication():
 
 def udp_client_communication():
     client = ClientUDP(server_host, udp_server_port)
+    client.client_socket.settimeout(100)
     while True:
-        command = input("Введите команду (TIME, UPLOAD, DOWNLOAD, CLOSE):").upper()
+        try:
+            command = input("Введите команду (TIME, UPLOAD, DOWNLOAD, CLOSE):").upper()
 
-        if command == 'TIME':
-            response = client.get_time()
-            print(response)
-        elif command == 'UPLOAD':
-            file_path = input("Введите путь до файла: ")
-            client.upload_file(file_path)
-        elif command == 'DOWNLOAD':
-            client.send(command)
-            file_name = input("Введите имя файла для скачивания с сервера: ")
-            client.send(file_name)
-            if client.recv()[0].decode() != "FILE_NOT_FOUND":
-                client.download_file(file_name)
+            if command == 'TIME':
+                response = client.get_time()
+                print(response)
+            elif command == 'UPLOAD':
+                file_path = input("Введите путь до файла: ")
+                client.upload_file(file_path)
+            elif command == 'DOWNLOAD':
+                client.send(command)
+                file_name = input("Введите имя файла для скачивания с сервера: ")
+                client.send(file_name)
+                if client.recv()[0].decode() != "FILE_NOT_FOUND":
+                    client.download_file(file_name)
+                else:
+                    print("Файл не найден на сервере")
+            elif command == 'CLOSE':
+                break
             else:
-                print("Файл не найден на сервере")
-        elif command == 'CLOSE':
-            break
-        else:
-            print("Неверная команда")
-    client.close_client()
+                print("Неверная команда")
+        except socket.timeout:
+            client.send("CONTROL")
+            if client.recv() == "CONTROL":
+                continue
+        except Exception as e:
+            print(f"Error {e}")
+        finally:
+            client.close_client()
+            return
 
 
 def main():

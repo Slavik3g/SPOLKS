@@ -1,4 +1,5 @@
 import os
+import socket
 
 from server import Server
 from server_udp import ServerUDP
@@ -58,7 +59,9 @@ def udp_server_communication():
             data = server.server_socket.recvfrom(1024)
             command = data[0].decode().upper()
             address = data[1]
-            if command == "TIME":
+            if data == "CONTROL":
+                server.send("CONTROL", address)
+            elif command == "TIME":
                 print("Пришёл запрос на получение времени")
                 server.send_time(address)
             elif command == "UPLOAD":
