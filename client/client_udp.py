@@ -24,29 +24,42 @@ class ClientUDP:
         response = self.recv()
         return response[0].decode()
 
-    def download_file(self, file_name):
+    def download_file(self, file_name, lines):
         expected_sequence_number = 0
         file_data = ""
+        data_file = {}
         while True:
             data, _ = self.recv()
             received_sequence_number, message = data.decode().split(":")
             received_sequence_number = int(received_sequence_number)
 
             if message == "END_OF_FILE":
+                while True:
+                    if len(data_file) != lines:
+                        self.send("Err")
+                        data_file = sorted(data_file.items(), key=lambda x: x[0])
+                        full_set = set(range(1, lines))
+                        existing_set = set(list(data_file))
+                        missing_numbers = full_set - existing_set
+                        missing_numbers_list = list(missing_numbers)
+                        for num in missing_numbers_list:
+                            self.send(f"{num}")
+                            data, _ = self.recv()
+                            received_sequence_number, message = data.decode().split(":")
+                            received_sequence_number = int(received_sequence_number)
+                            data_file[received_sequence_number] = message
+                    else:
+                        break
+
                 print("Файл скачан.")
                 acknowledgment = f"Acknowledgment for sequence number {received_sequence_number}"
                 self.send(acknowledgment)
                 self.send("END")
                 break
 
-            if received_sequence_number == expected_sequence_number:
-                file_data += message
-                acknowledgment = f"Acknowledgment for sequence number {received_sequence_number}"
-                self.send(acknowledgment)
-
-                expected_sequence_number += 1
-            else:
-                print("Пропущено сообщение с номером последовательности", received_sequence_number)
+            data_file[received_sequence_number] = message
+            acknowledgment = f"Acknowledgment for sequence number {received_sequence_number}"
+            self.send(acknowledgment)
 
         with open(file_name, 'w') as file:
             file.write(file_data)
@@ -77,6 +90,10 @@ class ClientUDP:
                     acknowledgment = self.recv()[0].decode()
                     if acknowledgment == "END":
                         break
+                    elif acknowledgment.split()[0] == "Err":
+                        while acknowledgment != "END":
+                            number = self.recv()[0].decode()
+
                     print(acknowledgment)
                 self.client_socket.settimeout(None)
 

@@ -4,8 +4,8 @@ import socket
 from server import Server
 from server_udp import ServerUDP
 
-# host = '192.168.52.102'
-host = '127.0.0.1'
+host = '192.168.120.102'
+# host = '127.0.0.1'
 port = 12333
 udp_port = 33324
 
