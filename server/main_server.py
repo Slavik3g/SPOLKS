@@ -4,8 +4,8 @@ import socket
 from server import Server
 from server_udp import ServerUDP
 
-host = '192.168.120.102'
-# host = '127.0.0.1'
+# host = '192.168.120.102'
+host = '127.0.0.1'
 port = 12333
 udp_port = 33324
 
@@ -66,7 +66,11 @@ def udp_server_communication():
                 server.send_time(address)
             elif command == "UPLOAD":
                 print("Пришёл загрузку файла на сервер")
-                server.upload_file()
+                file_name, address = server.recv()
+                lines = int(server.recv()[0].decode())
+                print("Lines num:", lines)
+                server.upload_file(file_name, lines, address)
+
             elif command == "DOWNLOAD":
                 file_name = server.recv()[0].decode()
                 print(f"Пришёл запрос на закачку файла {file_name}")
