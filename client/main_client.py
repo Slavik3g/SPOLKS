@@ -5,7 +5,7 @@ from client import Client
 
 # server_host = '192.168.52.102'
 server_host = '127.0.0.1'
-server_port = 12333
+server_port = 12334
 
 
 def main():
@@ -13,6 +13,7 @@ def main():
     client.create_connection()
     try:
         while True:
+
             command = input("Введите команду (ECHO, TIME, UPLOAD, DOWNLOAD, CLOSE): ")
             client.send(command)
 
